@@ -2,9 +2,9 @@
 
 **Audit date:** 4 October 2026
 **Scope:** repository at `davidjamesshelley-netizen/ManxHub`, its only product
-document, GitHub deployment metadata, and read-only checks of
-<https://manxhub.com>. The production source and hosting account were not
-available, so production findings cannot be fixed from this repository.
+document, GitHub deployment metadata, and read-only HTTP plus manual browser
+checks of <https://manxhub.com>. The production source and hosting account were
+not available, so production findings cannot be fixed from this repository.
 
 ## Owner verdict
 
@@ -57,16 +57,25 @@ Read-only probes returned byte-for-byte identical homepage HTML for:
 - `/services/`
 - `/search?q=plumber`
 - `/business/tesco-douglas/`
+- `/about/`
+- `/contact/`
 
 Each returned HTTP 200, the homepage title and H1, and a canonical URL pointing
 to `/`. A soft-200 fallback hides outages from uptime checks while users and
 search engines receive no directory, result, or profile content. This blocks
 the core user value and any credible monetisation.
 
+Manual browser testing confirmed that changing the search term and following
+category, About, Contact, and business links leaves the user on homepage
+content. An API-shaped `/api/businesses` request also returned HTML rather than
+business data. This is consistent with an incomplete static/catch-all
+deployment, but the unavailable production source and origin logs are required
+to establish the root cause.
+
 **Fix in the production repository:** restore route/data handling; return unique
 server-rendered content and self-referencing canonicals for valid pages; return
 404/410 for invalid pages; add smoke tests for homepage, search, category,
-profile, privacy, and terms routes.
+profile, About, Contact, privacy, terms, and API routes.
 
 ### High — SEO is actively being damaged
 
@@ -77,7 +86,8 @@ profile, privacy, and terms routes.
 - `www.manxhub.com` serves duplicate content instead of redirecting to the
   canonical apex host.
 - The homepage itself has a title, meta description, canonical, `lang="en"`,
-  one H1, Open Graph title, robots file, and a primary XML sitemap. Those basics
+  one H1, Open Graph and Twitter metadata, Schema.org organization/site/search
+  data, a robots file, and a primary XML sitemap. Those strong homepage basics
   do not offset the route failures.
 
 **Fix in the production repository:** repair or remove invalid sitemap
@@ -171,11 +181,12 @@ protection law; sole-trader and contact data can be personal data.
 
 ### Medium — accessibility is unverified and under-specified
 
-There is no app UI source or accessibility test suite. On the live homepage,
-the search text input relies on placeholder text and has no programmatic label.
-Static markup checks found language, heading, viewport, and visible button text,
-but cannot establish keyboard behavior, focus visibility, contrast, zoom,
-screen-reader output, error announcements, or mobile reflow.
+There is no app UI source or accessibility test suite. Manual browser checks of
+the live homepage found logical keyboard focus with visible indicators and
+clean reflow at 400px without horizontal scrolling. However, the search text
+input relies on placeholder text and has no programmatic label, and there is no
+skip-to-content link or primary navigation landmark. Contrast, zoom,
+screen-reader output, and error announcements remain unverified.
 
 The PRD now includes a minimum accessibility gate: VoiceOver labels and order,
 Dynamic Type, contrast, reduced motion, touch targets, non-colour cues, and
