@@ -414,7 +414,11 @@ As a visitor in a hire car on a rural road, I want to see all businesses near my
 - [ ] Cluster pins at low zoom levels (>50 pins visible → cluster with count)
 - [ ] Map filtering: tap category chips at top to filter visible pins
 - [ ] IoM-specific: map bounds locked to island (no wandering to Cumbria)
-- [ ] Offline: last-loaded map tiles cached for 48 hours
+- [ ] Equivalent sortable list exposes every visible result without requiring
+      map perception or gestures; annotations have useful VoiceOver labels and
+      a logical traversal order
+- [ ] Offline map content is used only under a provider licence that permits
+      download and caching
 - [ ] Performance: 1,511 pins rendered without lag on iPhone 11 or newer
 
 **Dev Effort:** 12-15 days  
@@ -527,7 +531,9 @@ As a resident, I want to leave a review for the plumber I just used so future re
 - [ ] Review includes: star rating, date, reviewer first name + last initial
 - [ ] Business owner can flag a review (goes to moderation queue)
 - [ ] Minimum review length: 20 characters (prevents "Good." spam)
-- [ ] Profanity filter (basic word list)
+- [ ] Layered abuse controls cover spam, harassment, impersonation, rate limits,
+      repeat offenders, appeals, and an auditable moderation queue; a profanity
+      word list is not sufficient by itself
 - [ ] Aggregate rating updates in real-time via Supabase realtime
 
 **Dev Effort:** 8-10 days  
@@ -578,7 +584,8 @@ As a visitor planning a day trip, I want to plot a route that hits three specifi
 **Acceptance Criteria:**
 - [ ] "Get Directions" on any business opens Apple Maps with destination pre-filled
 - [ ] "Add to Route" on business profile adds to a temporary route planner
-- [ ] Route planner: up to 5 stops, drag to reorder
+- [ ] Route planner: up to 5 stops; drag to reorder plus Move Up/Move Down
+      controls and VoiceOver adjustable actions
 - [ ] "Open in Apple Maps" button exports multi-stop route
 - [ ] "Open in Google Maps" option (URL scheme fallback)
 - [ ] Distance and estimated drive time shown for each route
@@ -996,8 +1003,8 @@ Once user base reaches 2,000+ MAU (estimated Month 6-8):
 | Networking | URLSession + async/await | Native, no third-party networking dep |
 | Image Loading | SDWebImage or Kingfisher | Standard, reliable image caching |
 | AR (P2) | ARKit + RealityKit | Apple-native, no Vuforia cost |
-| Analytics | TelemetryDeck | Privacy-respecting, GDPR-safe, £9/mo |
-| Crash Reporting | Sentry (free tier) | Industry standard |
+| Analytics | TelemetryDeck | Candidate only after DPA, regional processing, minimisation, and retention review |
+| Crash Reporting | Sentry (free tier) | Candidate only with PII scrubbing, DPA, regional processing, and retention controls |
 
 ---
 
@@ -1064,6 +1071,9 @@ CREATE INDEX businesses_fts_idx ON businesses
   handlers idempotent
 - Rate-limit claims, reviews, uploads, search, and notification requests; scan
   uploads and enforce type and size limits
+- Encrypt sensitive data in transit and at rest; minimise locally retained
+  searches, saved places, and routes; use iOS data-protection classes, exclude
+  regenerable caches from backups, and provide deletion/expiry behavior
 - Require strong admin authentication, explicit authorization, CSRF protection
   for browser actions, and an immutable audit trail
 - Test authorization policies, backup restoration, account deletion, and data
@@ -1218,12 +1228,16 @@ The 1,511 ManxHub business records are the foundation. Here is what exists and w
 **Business Claim Flow:**
 1. Business owner finds their listing in app
 2. Taps "Claim this listing"
-3. Enters email address
-4. Receives verification email to domain email or phone
-5. Verified → dashboard access (read-only profile + edit capability)
-6. First prompt: "Add your best 3 photos"
-7. Second prompt: "Confirm your opening hours"
-8. Upsell: "Unlock Premium for £9.99/month to see analytics and boost your listing"
+3. Enters a business-domain email and supporting evidence
+4. Completes domain verification; phone verification is only a contact check,
+   not proof of ownership
+5. High-risk, shared-domain, free-email, or disputed claims require registry or
+   documentary evidence and manual review
+6. Approved → least-privilege dashboard access; every claim and ownership
+   change is rate-limited and audit-logged, with a dispute/revocation process
+7. First prompt: "Add your best 3 photos"
+8. Second prompt: "Confirm your opening hours"
+9. Upsell: "Unlock Premium for £9.99/month to see analytics and boost your listing"
 
 Target: 300 claimed listings by end of Year 1 (20% of total). Claimed listings are higher quality and represent warm B2B prospects.
 
@@ -1261,6 +1275,9 @@ Most apps launch with no users and no content. This app launches with 1,511 veri
 
 **Beta tester targets:**
 - 20 IoM residents (diverse ages, parishes, digital confidence levels)
+- Include disabled participants and explicit coverage of VoiceOver, Switch
+  Control, Voice Control, external keyboard, accessibility Dynamic Type sizes,
+  Increase Contrast, and Reduce Motion
 - 10 regular IoM visitors (recruit via Moghrey Mie's visitor readership)
 - 10 TT regular attendees (via motorsport communities)
 - 10 IoM business owners (first B2B relationship building)
@@ -1498,6 +1515,8 @@ Accessibility is a release requirement, not post-launch polish:
 - Reduce Motion and Reduce Transparency respected by seasonal and TT effects
 - Minimum 44×44 point touch targets and alternatives to gesture-only actions
 - Keyboard, Switch Control, and Voice Control paths for all primary tasks
+- Maps and charts have equivalent lists, tables, or text summaries; audio guides
+  include transcripts
 - Automated accessibility checks plus manual VoiceOver, zoom, contrast, and
   focus testing in the release checklist
 

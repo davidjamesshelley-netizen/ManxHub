@@ -128,12 +128,18 @@ reviews, sponsorship, and payment webhooks but specifies no:
 - owner/admin authorization model;
 - signed webhook verification and replay protection;
 - abuse controls for reviews, claims, uploads, search, or notifications;
+- ownership proof stronger than possession of an email address or phone number;
 - audit log, backup/restore test, retention schedule, or deletion workflow;
 - validation preventing users from changing listing tier, ownership, aggregate
   ratings, or sponsorship state.
 
 The architecture section now includes a required security baseline, but it
 still needs implementation and tests once a backend exists.
+
+The PRD's claim flow has also been tightened to require domain or documentary
+evidence, manual review for risky/disputed claims, least privilege, rate limits,
+an audit history, and revocation. Email or phone possession alone does not prove
+business ownership.
 
 ### Medium — no exposed credentials found, with limited assurance
 
@@ -173,9 +179,10 @@ screen-reader output, error announcements, or mobile reflow.
 
 The PRD now includes a minimum accessibility gate: VoiceOver labels and order,
 Dynamic Type, contrast, reduced motion, touch targets, non-colour cues, and
-keyboard/switch access. Production should target WCAG 2.2 AA where applicable
-and include automated checks plus manual keyboard, VoiceOver, zoom, and
-contrast testing.
+keyboard/switch access. It now also requires nonvisual map/chart equivalents,
+non-drag reordering, audio transcripts, and disabled beta participants.
+Production should target WCAG 2.2 AA where applicable and include automated
+checks plus manual keyboard, VoiceOver, zoom, and contrast testing.
 
 ### Medium — several planned technical choices were unsafe or inaccurate
 
