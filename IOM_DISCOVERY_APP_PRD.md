@@ -6,6 +6,12 @@
 **Date:** March 2026  
 **Classification:** Confidential — Investor & Development Use  
 
+> **Repository status note (October 2026):** This is a planning document, not
+> delivery evidence. The repository containing it has no app source, build,
+> tests, CI, or deployment configuration. Unchecked roadmap items require links
+> to implementation, verification, and release evidence before they can be
+> marked complete. See [AUDIT.md](AUDIT.md).
+
 ---
 
 > *"The Isle of Man is one of the most fascinating places in the British Isles — and one of the least discoverable. This app fixes that."*
@@ -490,7 +496,8 @@ As a visitor hiking in the hills above Snaefell, I want to see nearby businesses
 **Acceptance Criteria:**
 - [ ] App downloads full business dataset on first launch (background, ~2MB compressed)
 - [ ] All 1,511 business names, addresses, categories, phone numbers, and coordinates stored locally via SwiftData
-- [ ] Map tiles cached for IoM bounding box at zoom levels 10-16
+- [ ] Offline map strategy uses a provider and licence that explicitly permit
+      offline tile download; Apple MapKit tiles are not cached arbitrarily
 - [ ] Offline state clearly indicated (banner: "Offline — showing cached data from [date]")
 - [ ] Search and category browse fully functional offline
 - [ ] Business profiles accessible offline (last-cached version)
@@ -837,6 +844,9 @@ Layer 4: Data Licensing (Month 12+)
 - All viewing points
 - Push notifications for session starts and race delays
 - Offline circuit map
+- Product type and expiry behaviour must be reviewed against current App Store
+  rules; model this as fixed-duration access rather than assuming a consumable
+  purchase is appropriate
 
 **Heritage Trail Pack — £3.99 (one-time purchase):**
 - All 12 Heritage Trails
@@ -1042,6 +1052,23 @@ CREATE INDEX businesses_fts_idx ON businesses
 
 **Additional tables:** `categories`, `subcategories`, `reviews`, `users`, `business_owners`, `saved_places`, `saved_lists`, `events`, `heritage_trails`, `trail_waypoints`, `photos`, `sponsored_placements`
 
+**Security baseline (required before any client connects):**
+- Enable row-level security on every exposed table and storage bucket; default
+  to deny and grant only the minimum read/write operations required
+- Keep Supabase service-role keys, payment secrets, signing keys, and admin
+  credentials in server-side managed secrets; never ship them in the app
+- Separate public profile fields from owner/admin-only fields; clients cannot
+  directly change ownership, listing tier, aggregate ratings, sponsorship, or
+  moderation state
+- Verify payment and provider webhook signatures, reject replays, and make
+  handlers idempotent
+- Rate-limit claims, reviews, uploads, search, and notification requests; scan
+  uploads and enforce type and size limits
+- Require strong admin authentication, explicit authorization, CSRF protection
+  for browser actions, and an immutable audit trail
+- Test authorization policies, backup restoration, account deletion, and data
+  retention before beta
+
 ---
 
 ### Data Pipeline: ManxHub → Supabase
@@ -1156,10 +1183,11 @@ The 1,511 ManxHub business records are the foundation. Here is what exists and w
 | Service tags | 67% | Medium | Normalise tag vocabulary |
 | Description | 58% | Medium | Gap-fill with AI-generated from available data |
 | Lat/Lng | 70% | High (where present) | Geocode missing 30% |
-| Photos | 23% | Low | Priority gap — crowd-source + Google Places fallback |
+| Photos | 23% | Low | Priority gap — owner/community submissions and licensed sources only |
 
 **Photo gap strategy:**
-1. Google Places API photo fetch for ~1,100 businesses missing photos (fallback, clearly attributed)
+1. Use third-party photos only where the provider's current licence explicitly
+   permits the intended retrieval, storage, attribution, and display
 2. Business claim flow: first action = "Upload your best photo"
 3. Community photo submissions (reviewed before publishing)
 4. Category placeholder images (professionally designed, not generic stock)
@@ -1458,6 +1486,21 @@ Premium design signals: no ads (clean UI), richer map detail, full Heritage Trai
 
 The UI acknowledges the island's seasons. TT Week gets its own colour scheme (orange/black, race-circuit aesthetic). Winter softens the palette. Heritage season (shoulder months) leans into earthy tones. The app should feel alive and relevant year-round.
 
+### 7. Accessible by Default
+
+Accessibility is a release requirement, not post-launch polish:
+
+- VoiceOver labels, values, hints, grouping, and focus order for every
+  interactive screen, including map alternatives
+- Dynamic Type without clipping or loss of functionality at accessibility sizes
+- WCAG 2.2 AA colour contrast where applicable; status never conveyed by colour
+  alone
+- Reduce Motion and Reduce Transparency respected by seasonal and TT effects
+- Minimum 44×44 point touch targets and alternatives to gesture-only actions
+- Keyboard, Switch Control, and Voice Control paths for all primary tasks
+- Automated accessibility checks plus manual VoiceOver, zoom, contrast, and
+  focus testing in the release checklist
+
 ---
 
 ## 14. SUCCESS METRICS
@@ -1723,9 +1766,17 @@ Government-funded tourism app for the Isle of Wight (~140,000 population, simila
 **Data Protection (GDPR/IoM DP Act 2018):**
 - IoM has its own data protection legislation aligned with GDPR
 - User data stored in Supabase EU region (Frankfurt)
-- Privacy Policy required before launch — covers: data collected, how used, third parties, user rights
+- Privacy notice required before launch — covers actual data collected, purposes,
+  lawful bases, processors, international transfers, retention periods, user
+  rights, and contact/escalation routes
 - Reviews and user-generated content: users retain ownership; app has licence to display
-- Business data: public information (name, address, phone) does not require consent; enriched data from business owners requires their consent via claim flow
+- Public availability does not automatically remove data-protection obligations;
+  sole-trader and individual contact details can be personal data. Document the
+  lawful basis, minimisation, correction/objection process, and source for every
+  imported field
+- Precise location and mobility-derived analytics require a data-protection
+  impact assessment before collection or licensing; small-island datasets can
+  remain re-identifiable after naive aggregation
 
 **App Store Requirements:**
 - Privacy nutrition label: location (precise + coarse), usage data, identifiers
@@ -1734,13 +1785,18 @@ Government-funded tourism app for the Isle of Wight (~140,000 population, simila
 - In-app purchase review: allow 3+ weeks for first StoreKit submission
 
 **ManxHub Data:**
-- Confirm licensing terms with ManxHub before commercial launch
-- If ManxHub data is David's own (same owner), no issue
-- If third-party data: formal licence agreement or data purchase required
+- Confirm ownership, provenance, database rights, source terms, and permitted
+  commercial uses before development
+- Common ownership does not waive privacy, third-party source, accuracy, or
+  intellectual-property obligations
+- If third-party data is present, obtain a formal licence or replace it with a
+  permitted source
 
 **Trademark:**
 - "IoM Discovery" — file for UK trademark (Class 42: Software) at UKIPO, £170 online
-- Manx triskelion symbol: not trademarked; cultural symbol freely usable by Manx residents
+- Obtain legal guidance before using official or culturally significant
+  triskelion artwork; do not assume a symbol or a specific rendering is free of
+  trademark, copyright, passing-off, or government-emblem restrictions
 
 ---
 
@@ -1770,17 +1826,20 @@ The composite of these advantages is why this app — built by David Shelley —
 
 ---
 
-**Next Actions (in order):**
+**Proposed Next Actions (in order):**
 
-1. ✅ Confirm ManxHub data licence / ownership
-2. ✅ Set up Supabase project (`iom-discovery`)
-3. ✅ Export ManxHub data to JSON
-4. ✅ Run normalisation + geocoding script
-5. ✅ Create Xcode project (SwiftUI, iOS 17+)
-6. ✅ Build map view with business pins
-7. ✅ TestFlight beta to 10 friends
-8. ✅ Book Isle of Man Examiner journalist for launch exclusive
-9. ✅ Submit to App Store 3 weeks before TT Week
-10. ✅ Email all 1,511 businesses on launch day
+Completion is not evidenced in this repository. Mark an item complete only with
+a link to the relevant implementation, test result, agreement, or release.
+
+1. [ ] Identify and recover the source and deployment ownership for the live website
+2. [ ] Repair and smoke-test website search, category, business-detail, canonical, and sitemap routes
+3. [ ] Confirm ManxHub data ownership, provenance, licence, and privacy basis in writing
+4. [ ] Audit a representative data sample for freshness, contact accuracy, coordinates, and source rights
+5. [ ] Validate repeat usage and paid-listing willingness with measurable website experiments
+6. [ ] Decide whether evidence supports a native app over further web investment
+7. [ ] Create a minimal Xcode project with a reproducible build and CI
+8. [ ] Implement Supabase schema plus tested deny-by-default RLS and secret handling
+9. [ ] Build and test the narrow map/search/profile/offline MVP, including accessibility acceptance tests
+10. [ ] Complete privacy, security, data-rights, and App Store reviews before TestFlight or outreach
 
 *The island is waiting. Build it.*
