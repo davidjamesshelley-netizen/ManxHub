@@ -1,6 +1,6 @@
 # ManxHub audit
 
-**Audit date:** 4 October 2026  
+**Audit date:** 4 October 2026
 **Scope:** repository at `davidjamesshelley-netizen/ManxHub`, its only product
 document, GitHub deployment metadata, and read-only checks of
 <https://manxhub.com>. The production source and hosting account were not
